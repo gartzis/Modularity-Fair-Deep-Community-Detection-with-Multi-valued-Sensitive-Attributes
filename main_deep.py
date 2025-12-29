@@ -182,11 +182,11 @@ def computeMetrics(G, communities,G_attribute):
     modularity = nx.algorithms.community.modularity(G, communities, weight="weight")
     diversitymodularity,diversityModularityList = diversityMetric(G, communities,G_attribute, weight="weight", resolution=1)
     unfairness,unfairnessList,unfairnessModularityPerc,groupModularityList,grouModularity_dict = modularityFairnessMetric(G, communities,G_attribute, weight="weight", resolution=1)
-    redModularity = min(groupModularityList)
-    blueModularity = max(groupModularityList)
+    redModularity = grouModularity_dict[0]
+    blueModularity = grouModularity_dict[1]
     lUnfairness,lUnfairnessList,lUnfairnessModularityPerc,lgroupModularityList,lgrouModularity_dict = LModularityFairnessMetric(G, communities,G_attribute, weight="weight", resolution=1)
-    lRedModularity = min(lgroupModularityList)
-    lBlueModularity = max(lgroupModularityList)
+    lRedModularity = lgrouModularity_dict[0]
+    lBlueModularity = lgrouModularity_dict[1]
     lDiversity,lDiversityList = LdiversityMetric(G, communities,G_attribute, weight="weight", resolution=1)
     
     print('\nModularity:',modularity)
