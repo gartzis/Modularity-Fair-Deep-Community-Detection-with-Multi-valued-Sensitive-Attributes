@@ -8,7 +8,7 @@ It includes the **binary** setting (two groups) and the **multivalued** setting 
 
 
 
-
+[![DOI](https://zenodo.org/badge/1121712117.svg)](https://doi.org/10.5281/zenodo.18088298)
 
 ## Directory Structure
 
