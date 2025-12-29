@@ -572,7 +572,7 @@ def build_multi_group_dmon(input_features,
 
 def deepMultiGroupClustering(edgelist_path,
                         attributes_path,
-                        k_opt,
+                        
                         featuresType='id',
                         lamda=0.5):
     """
@@ -677,7 +677,7 @@ def deepMultiGroupClustering(edgelist_path,
 
 
 def deepMultiPairDiversityClustering(edgelist_path,
-                                 attributes_path,k_opt,
+                                 attributes_path,
                                  featuresType='id',
                                  lamda=0.5,
                                  group_values=None):
@@ -809,7 +809,7 @@ def deepMultiPairDiversityClustering(edgelist_path,
 
 def deepMultiGroupDiversityClustering(edgelist_path,
                                      attributes_path,
-                                     k_opt,
+                                     
                                      featuresType='id',
                                      lamda=0.5,
                                      group_values=None,
@@ -947,7 +947,7 @@ def build_fairness_group_dmon(input_features,
 
 def deepMultiFairnessClustering(edgelist_path,
                         attributes_path,
-                        k_opt,
+                        
                         featuresType='id',
                         lamda=0.5):
     """
