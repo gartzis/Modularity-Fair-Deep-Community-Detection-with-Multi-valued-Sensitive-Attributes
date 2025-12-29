@@ -2,132 +2,173 @@ import networkx as nx
 import pandas as pd
 
 
+def compute_multi_group_modularity_fairness(G, communities, G_attribute,
+                                            weight="weight", resolution=1):
+    """
+    Exact multi-group generalization of the original red/blue modularity fairness.
 
-def compute_modularityFairness(G, communities, weight="weight", resolution=1):
+    For each community C and group g:
+      - L_{C,g} = internal group volume:
+          2 * (# edges (u,v) in C with attr(u)=g and attr(v)=g)
+        + 1 * (# edges (u,v) in C with exactly one endpoint in group g).
+      - deg_C  = sum of degrees of nodes in C (using 'weight').
+      - deg_{C,g} = sum of degrees of nodes in C whose attribute == g.
+
+    Then:
+      Q_{C,g} = L_{C,g} / (2m) - resolution * deg_C * deg_{C,g} * norm,
+
+    where:
+      m = total number of edges (undirected: m = sum(deg)/2),
+      norm = 1 / (sum(deg)^2) for undirected graphs.
+
+    This matches the original red/blue definition when there are exactly 2 groups.
+    """
+
     directed = G.is_directed()
     if directed:
         out_degree = dict(G.out_degree(weight=weight))
         in_degree = dict(G.in_degree(weight=weight))
         m = sum(out_degree.values())
-        norm = 1 / m**2
+        norm = 1.0 / (m ** 2) if m > 0 else 0.0
     else:
         out_degree = in_degree = dict(G.degree(weight=weight))
         deg_sum = sum(out_degree.values())
-        m = deg_sum / 2
-        norm = 1 / deg_sum**2
+        m = deg_sum / 2.0
+        norm = 1.0 / (deg_sum ** 2) if deg_sum > 0 else 0.0
 
+    groups = sorted(set(G_attribute.values()))
 
-
-        degrees_red = dict(G.nodes(data="red_weight"))
-        degrees_blue = dict(G.nodes(data="blue_weight"))
+    community_modularity_list = []
+    per_group_Q_list = {g: [] for g in groups}
 
     def community_contribution(community):
-        
-        if len(community)>0:
-            
-            comm = set(community)
+        if not community:
+            return 0.0, {g: 0.0 for g in groups}
 
-            out_degree_sum = sum(out_degree[u] for u in comm)
-            degree_R = sum(degrees_red[u] for u in comm)
-            degree_B = sum(degrees_blue[u] for u in comm)
+        comm = set(community)
 
-            L_c = sum(wt for u, v, wt in G.edges(comm, data=weight, default=1) if v in comm)
+        # Community degree masses
+        deg_C = sum(out_degree[u] for u in comm)
+        deg_C_in = sum(in_degree[u] for u in comm) if directed else deg_C
 
+        # Internal edges and group internal volumes
+        L_C = 0.0
+        group_internal = {g: 0.0 for g in groups}
 
-            inter_L =sum(wt for u, v, wt in G.edges(comm, data="inter_weight", default=1) if v in comm)
-     
-            
-            fair_L_cR = 2*sum(wt for u, v, wt in G.edges(comm, data="r_weight", default=1) if v in comm)+ inter_L
-            fair_L_cB = 2*sum(wt for u, v, wt in G.edges(comm, data="b_weight", default=1) if v in comm) + inter_L
-            
-            in_degree_sum = sum(in_degree[u] for u in comm) if directed else out_degree_sum
-            
+        for u, v, wt in G.edges(comm, data=weight, default=1):
+            if v not in comm:
+                continue  # ensure internal
 
+            L_C += wt
+            gu = G_attribute[u]
+            gv = G_attribute[v]
 
-            modularityR = (fair_L_cR / (2*m)) - (resolution * out_degree_sum * degree_R * norm)
-
-            modularityB = (fair_L_cB / (2*m)) - (resolution * out_degree_sum * degree_B * norm)
-
-            
-            modularityCommunity = (L_c / m) - (resolution * out_degree_sum * in_degree_sum * norm)
-            if modularityCommunity !=0:
-                fairModPerc = (modularityR-modularityB)/abs(modularityCommunity)
+            if gu == gv:
+                # same-group edge → contributes 2 * wt to that group's internal volume
+                group_internal[gu] += 2.0 * wt
             else:
-                fairModPerc = 0
+                # cross-group edge → 1 * wt to each group's internal volume
+                group_internal[gu] += wt
+                group_internal[gv] += wt
 
-            modularityInter = (inter_L / m) - (resolution * degree_R * degree_B * norm)
-           
-
-            return (modularityR-modularityB),fairModPerc,modularityR,modularityB
-
+        # Standard modularity contribution of C
+        if m > 0:
+            Q_C = (L_C / m) - resolution * deg_C * deg_C_in * norm
         else:
-            return 0
-    communitiesNum = 0
-    for c in communities:
-        if len(c)>0:
-            communitiesNum+=1
+            Q_C = 0.0
 
-    communityModularityist = []
-    
-    fairModPercList = []
-    redModularityList = []
-    blueModularityList = []
+        # Group degree masses (global degrees, as in original binary code)
+        group_deg = {g: 0.0 for g in groups}
+        for u in comm:
+            g = G_attribute[u]
+            group_deg[g] += out_degree[u]
 
-    
+        # Per-group modularity contributions Q_{C,g}
+        group_mod = {}
+        for g in groups:
+            deg_Cg = group_deg[g]
+            if m > 0 and deg_Cg > 0:
+                group_mod[g] = (group_internal[g] / (2.0 * m)) - \
+                               resolution * deg_C * deg_Cg * norm
+            else:
+                group_mod[g] = 0.0
+
+        return Q_C, group_mod
+
+    # Compute per-community & per-group
     for community in communities:
-        community_cont = community_contribution(community)
-        communityModularityist.append(community_cont[0])
-        fairModPercList.append(community_cont[1])
-        redModularityList.append(community_cont[2])
-        blueModularityList.append(community_cont[3])
-        
-        
-        
-    return sum(communityModularityist),communityModularityist,fairModPercList,redModularityList,blueModularityList
+        Q_C, group_mod = community_contribution(community)
+        community_modularity_list.append(Q_C)
+        for g in groups:
+            per_group_Q_list[g].append(group_mod[g])
+
+    # Aggregate group modularities
+    per_group_Q = {g: sum(per_group_Q_list[g]) for g in groups}
+    Q_total = sum(community_modularity_list)
+
+    # Global gap + normalized gap
+    if len(groups) >= 2:
+        vals = list(per_group_Q.values())
+        Q_min = min(vals)
+        Q_max = max(vals)
+        unfairness_gap = Q_max - Q_min
+        unfairness_normalized = unfairness_gap / abs(Q_total) if Q_total != 0 else 0.0
+    else:
+        unfairness_gap = 0.0
+        unfairness_normalized = 0.0
+
+    return (unfairness_gap,
+            per_group_Q,
+            unfairness_normalized,
+            per_group_Q_list,
+            community_modularity_list)
 
 
-def modularityFairnessMetric(G, communities,G_attribute, weight="weight", resolution=1):
-    
-    for u in G.nodes():
-        G.nodes[u]['red_weight'] = 0
-        G.nodes[u]['blue_weight'] = 0
-        
-    
-    for u,v in G.edges():
-        G[u][v]['r_weight'] = 0
-        G[u][v]['b_weight'] = 0  
-        G[u][v]['inter_weight'] = 0
-        G[u][v]['redblue_weight'] = 0
-        G[u][v]['bluered_weight'] = 0
 
-    for u,v in G.edges():
-        if G_attribute[u] == 0 and G_attribute[v]==0: # red
-            G[u][v]['r_weight'] = 1
-            
-            
-            
-        if G_attribute[u] == 1 and G_attribute[v]==1: # blue
-            G[u][v]['b_weight'] = 1
+def multiModularityFairnessMetric(G, communities, G_attribute,
+                                  weight="weight", resolution=1):
+    """
+    Parameters
+    ----------
+    G : networkx.Graph
+        Graph with any number of attribute values in G_attribute.
+    communities : list of lists
+        Partition of nodes.
+    G_attribute : dict
+        {node: attribute_value} for all nodes in G.
+    weight, resolution : as before.
 
-        if G_attribute[u] != G_attribute[v]:
-            G[u][v]['redblue_weight'] = 1
-            G[u][v]['bluered_weight'] = 1
-            G[u][v]['inter_weight'] = 1
+    Returns
+    -------
+    unfairness_gap : float
+        Global group modularity gap max_g Q_g - min_g Q_g.
+    unfairness_per_community : list of float
+        Per-community group modularity gap (max_g Q_{C,g} - min_g Q_{C,g}).
+    unfairness_normalized : float
+        Global normalized gap (see compute_multi_group_modularity_fairness).
+    per_group_Q_list : dict
+        {g: [Q_{C,g} for C in communities]} – per-group modularity per community.
+    per_group_Q : dict
+        {g: Q_g} – aggregated group modularity over the whole partition.
+    """
+    (unfairness_gap,
+     per_group_Q,
+     unfairness_normalized,
+     per_group_Q_list,
+     community_modularity_list) = compute_multi_group_modularity_fairness(
+        G, communities, G_attribute, weight=weight, resolution=resolution
+    )
 
-            
-            
-        if  G_attribute[v] == 0: # red
-            G.nodes[v]['red_weight'] +=1
-        if G_attribute[u] == 0:        
-            G.nodes[u]['red_weight'] +=1
-        if  G_attribute[v] == 1: # blue
-            G.nodes[v]['blue_weight'] +=1
-        if G_attribute[u] == 1:
-            G.nodes[u]['blue_weight'] +=1
+    # Optionally: per-community unfairness as max_g Q_{C,g} - min_g Q_{C,g}
+    groups = sorted(set(G_attribute.values()))
+    unfairness_per_community = []
+    for i in range(len(community_modularity_list)):
+        vals_i = [per_group_Q_list[g][i] for g in groups]
+        gap_i = max(vals_i) - min(vals_i) if len(vals_i) >= 2 else 0.0
+        unfairness_per_community.append(gap_i)
 
-            
-    fairModularity,fairModularityList,fairModularityPerc,redModularityList,blueModularityList = compute_modularityFairness(G, communities, weight="weight", resolution=1)
-    
-    return fairModularity,fairModularityList,fairModularityPerc,redModularityList,blueModularityList
-    
-    
+    return (unfairness_gap,
+            unfairness_per_community,
+            unfairness_normalized,
+            per_group_Q_list,
+            per_group_Q)
