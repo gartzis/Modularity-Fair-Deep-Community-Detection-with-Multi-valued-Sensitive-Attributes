@@ -1,4 +1,4 @@
-# Modularity-Fair Deep Community Detection (ICDM’25 + KAIS extension)
+# Modularity-Fair Deep Community Detection with Multi-valued Sensitive Attributes (ICDM’25 + KAIS extension)
 
 This repository provides implementations of modularity-based community detection methods that incorporate **connectivity fairness** with respect to a sensitive attribute.
 It includes the **binary** setting (two groups) and the **multivalued** setting (multiple groups), as presented in:
