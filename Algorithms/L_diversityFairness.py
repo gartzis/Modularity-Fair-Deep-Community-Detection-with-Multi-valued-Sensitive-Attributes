@@ -2,7 +2,7 @@ import networkx as nx
 import pandas as pd
 
 
-def compute_multi_pair_L_diversity(G, communities, G_attribute,
+def compute_multi_L_diversity(G, communities, G_attribute,
                                   weight="weight", resolution=1):
     """
     Multi-group generalization of your original diversity modularity.
@@ -163,7 +163,7 @@ def compute_multi_pair_L_diversity(G, communities, G_attribute,
     return diversity_modularity, community_diversity_list
 
 
-def pair_L_diversityMetric(G, communities, G_attribute, weight="weight", resolution=1):
+def LdiversityMetric(G, communities, G_attribute, weight="weight", resolution=1):
     """
     Wrapper with the same interface as your original diversityMetric:
 
@@ -172,6 +172,6 @@ def pair_L_diversityMetric(G, communities, G_attribute, weight="weight", resolut
     but generalized to multiple groups.
     For |groups| = 2 it reduces exactly to the original diversity metric.
     """
-    return compute_multi_pair_L_diversity(
+    return compute_multi_L_diversity(
         G, communities, G_attribute, weight=weight, resolution=resolution
     )

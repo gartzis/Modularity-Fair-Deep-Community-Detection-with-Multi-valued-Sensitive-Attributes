@@ -1,7 +1,7 @@
 import networkx as nx
 
 
-def compute_multi_pair_diversity(G, communities, G_attribute, weight="weight", resolution=1.0):
+def compute_multi_diversity(G, communities, G_attribute, weight="weight", resolution=1.0):
     """
     Unlabeled pairwise diversity modularity (multi-group).
 
@@ -76,9 +76,9 @@ def compute_multi_pair_diversity(G, communities, G_attribute, weight="weight", r
     return float(sum(per_comm)), per_comm
 
 
-def pair_DiversityFairnessMetric(G, communities, G_attribute, weight="weight", resolution=1.0):
+def diversityMetric(G, communities, G_attribute, weight="weight", resolution=1.0):
     """
     Same interface: returns (diversity_total, diversity_list).
     This is the unlabeled (no m_{g,h}) pairwise version.
     """
-    return compute_multi_pair_diversity(G, communities, G_attribute, weight, resolution)
+    return compute_multi_diversity(G, communities, G_attribute, weight, resolution)

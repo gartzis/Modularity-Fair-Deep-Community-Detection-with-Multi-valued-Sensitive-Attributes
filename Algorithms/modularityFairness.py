@@ -125,7 +125,7 @@ def compute_multi_group_modularity_fairness(G, communities, G_attribute,
 
 
 
-def multiModularityFairnessMetric(G, communities, G_attribute,
+def modularityFairnessMetric(G, communities, G_attribute,
                                   weight="weight", resolution=1):
     """
     Parameters
