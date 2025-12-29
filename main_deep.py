@@ -15,7 +15,7 @@ from networkx.algorithms.community import louvain_communities
 sys.path.append('Algorithms')
 from diversityFairness import diversityMetric
 from modularityFairness import modularityFairnessMetric
-from L_diversityFairness import LDiversityFairnessMetric
+from L_diversityFairness import LdiversityMetric
 from L_modularityFairness import LModularityFairnessMetric
 
 
@@ -181,14 +181,18 @@ def modularityCustom(G, communities, weight="weight", resolution=1):
 def computeMetrics(G, communities,G_attribute):
     modularity = nx.algorithms.community.modularity(G, communities, weight="weight")
     diversitymodularity,diversityModularityList = diversityMetric(G, communities,G_attribute, weight="weight", resolution=1)
-    unfairness,unfairnessList,unfairnessModularityPerc,redModularityList,blueModularityList = modularityFairnessMetric(G, communities,G_attribute, weight="weight", resolution=1)
-    lUnfairness,lUnfairnessList,lUnfairnessModularityPerc,lRedList,lBlueList = LModularityFairnessMetric(G, communities,G_attribute, weight="weight", resolution=1)
-    lDiversity,lDiversityList = LDiversityFairnessMetric(G, communities,G_attribute, weight="weight", resolution=1)
+    unfairness,unfairnessList,unfairnessModularityPerc,groupModularityList,grouModularity_dict = modularityFairnessMetric(G, communities,G_attribute, weight="weight", resolution=1)
+    redModularity = min(groupModularityList)
+    blueModularity = max(groupModularityList)
+    lUnfairness,lUnfairnessList,lUnfairnessModularityPerc,lgroupModularityList,lgrouModularity_dict = LModularityFairnessMetric(G, communities,G_attribute, weight="weight", resolution=1)
+    lRedModularity = min(lgroupModularityList)
+    lBlueModularity = max(lgroupModularityList)
+    lDiversity,lDiversityList = LdiversityMetric(G, communities,G_attribute, weight="weight", resolution=1)
     
     print('\nModularity:',modularity)
     print('---------------------')
-    print('RedModularity:',sum(redModularityList),'\tBlueModularity:',sum(blueModularityList))
-    print('L-Red Modularity',sum(lRedList),'\tL-Blue Modularity',sum(lBlueList))
+    print('RedModularity:',redModularity,'\tBlueModularity:',blueModularity)
+    print('L-Red Modularity',lRedModularity,'\tL-Blue Modularity',lBlueModularity)
     print('---------------------')
     print('Unfairness',unfairness,'\tDiversity:',diversitymodularity)
     print('L-Unfairness:',lUnfairness,'\tL-Diversity:',lDiversity)
@@ -333,7 +337,7 @@ for file_path in datasets:
 
     community_df.to_csv(os.path.join('Synth Results\\Deep Group Communities\\'+datasetName, datasetName + '_communities.csv'), index=False)
     
-    
+    computeMetrics(graph, blue_communities, graph_attributes)
     
     print('\n---Deep Diversity---')
     if not os.path.exists('Synth Results\\Deep Diversity Communities'):
@@ -364,6 +368,8 @@ for file_path in datasets:
 
     
     community_df.to_csv(os.path.join('Synth Results\\Deep Diversity Communities\\'+datasetName, datasetName + '_communities.csv'), index=False)
+
+    computeMetrics(graph, blue_communities, graph_attributes)
     
     print('\n---Deep Fairness---')
     
