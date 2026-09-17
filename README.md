@@ -1,4 +1,5 @@
 # Modularity-Fair Deep Community Detection with Multi-valued Sensitive Attributes (ICDM’25 + KAIS extension)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18088298.svg)](https://doi.org/10.5281/zenodo.18088298)
 
 This repository provides implementations of modularity-based community detection methods that incorporate **connectivity fairness** with respect to a sensitive attribute.
 It includes the **binary** setting (two groups) and the **multivalued** setting (multiple groups), as presented in:
@@ -8,7 +9,7 @@ It includes the **binary** setting (two groups) and the **multivalued** setting 
 
 
 
-[![DOI](https://zenodo.org/badge/1121712117.svg)](https://doi.org/10.5281/zenodo.18088298)
+
 
 ## Directory Structure
 
