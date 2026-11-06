@@ -44,7 +44,7 @@ def compute_ModMatrix_lamda(x,A, d,m, A_blue, dB, mB, lamda=0.5):
     y = inv_sqrt_d * x
     first_termMod = inv_sqrt_d * (A.dot(y))
 
-    dTy = dB.dot(y)
+    dTy = d.dot(y)
     correctionMod = (dTy / (2*m)) * inv_sqrt_d * d
 
     return   ((1-lamda) * first_termMod - correctionMod)+ (lamda *(first_termBlueMod - correctionBlueMod))
